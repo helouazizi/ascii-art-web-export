@@ -22,6 +22,7 @@ var temple01 *template.Template
 func Home(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Invalid request method", http.StatusBadRequest)
+		return
 	}
 	if r.URL.Path != "/" {
 		http.Error(w, "Error 404: NOT FOUND", http.StatusNotFound)
@@ -40,10 +41,6 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func ParseForm(r *http.Request) (string, string, error) {
-	err := r.ParseForm()
-	if err != nil {
-		return "", "", err
-	}
 	inputText := r.FormValue("inputText")
 	if len(inputText) > maxInputTextLength {
 		return "", "", fmt.Errorf("input text exceeds %d characters", maxInputTextLength)
@@ -68,7 +65,7 @@ func TreatData(templ []string, inputText string) string {
 
 func SubmitHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Error 405: Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "Error 405: Method not allowed", http.StatusBadRequest)
 		return
 	}
 	inputText, banner, err := ParseForm(r)
