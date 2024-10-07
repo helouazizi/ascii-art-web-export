@@ -11,15 +11,18 @@ import (
 type PageData struct {
 	Message string
 }
+
 // store this assci here for thee export needed
 var asciiArt string
-
 
 const maxInputTextLength = 500
 
 var temple01 *template.Template
 
 func Home(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Invalid request method", http.StatusBadRequest)
+	}
 	if r.URL.Path != "/" {
 		http.Error(w, "Error 404: NOT FOUND", http.StatusNotFound)
 		return
@@ -49,17 +52,17 @@ func ParseForm(r *http.Request) (string, string, error) {
 	return inputText, banner, nil
 }
 
-func ReadBannerTemplate(banner string) ([]string, error) {
+func ReadBannerTemplate(banner string) ([]string, error, bool) {
 	switch banner {
 	case "standard", "shadow", "thinkertoy":
-		return functions.ReadFile("banners/" + banner + ".txt"), nil
+		return functions.ReadFile("banners/" + banner + ".txt")
 	default:
-		return nil, fmt.Errorf("error: 300 invalid banner choice: %s", banner)
+		return nil, fmt.Errorf("error: 300 invalid banner choice: %s", banner), false
 	}
 }
 
 func TreatData(templ []string, inputText string) string {
-	asciiArt = functions.TraitmentData(templ,inputText)
+	asciiArt = functions.TraitmentData(templ, inputText)
 	return functions.TraitmentData(templ, inputText)
 }
 
@@ -73,10 +76,15 @@ func SubmitHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	templ, err := ReadBannerTemplate(banner)
+	templ, err, bol := ReadBannerTemplate(banner)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		if bol {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} else {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 	treatedText := TreatData(templ, inputText)
 
@@ -93,13 +101,12 @@ func ExportHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error 405: Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
+
 	// Create a file with the ASCII art text
 	fileContent := []byte(asciiArt)
-	fileName := "ascii-art.txt"
 
 	// Set the Content-Disposition header to force the browser to download the file
-	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Disposition", "attachment; filename=ascii-art.txt")
 
 	// Set the Content-Type header to text/plain
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")

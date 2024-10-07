@@ -7,19 +7,18 @@ import (
 )
 
 // this func just to read the banner file
-func ReadFile(filename string) []string {
+func ReadFile(filename string) ([]string, error, bool) {
 	data, err := os.ReadFile(filename)
 	// handle err
 	if err != nil {
-		fmt.Println("Error :", err)
-		os.Exit(0)
+		return nil, err, true
 	}
 	// handling if the banner file was writenf by windows
 	stringdata := string(data)
 	stringdata = strings.ReplaceAll(stringdata, "\r\n", "\n")
 
 	result := strings.Split(stringdata, "\n")
-	return result
+	return result, nil, false
 }
 
 // this is the the traitment functions
@@ -47,7 +46,6 @@ func TraitmentData(text []string, inputText string) string {
 func Final_result(arrData, words []string) string {
 	result := ""
 	for k := 0; k < len(words); k++ {
-		
 		for i := 0; i < 8; i++ {
 			for j := 0; j < len(words[k]); j++ {
 				Ascii := (int(words[k][j] - 32))
